@@ -1,25 +1,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-# import matplotlib.pyplot as plt
 
-# from shapely.geometry import Point, Polygon
-# import geopandas as gpd
-# import geopy
 from geopy.geocoders import Nominatim
-# from geopy.extra.rate_limiter import RateLimiter
-
-
-# for this streamlit app to work, I had to install several libraries.
-# geopandas did not work initially. After search, I found that it needs shapely, fiona and GDAL 
-# to work properly. Fiona and GDAL versions need to be adjusted to the version of python used.
-# for my Python 3.10.2 version to work, I installed Fiona‑1.8.21‑cp310‑cp310‑win_amd64.whl
-# and GDAL‑3.4.3‑cp310‑cp310‑win_amd64.whl from 
-# https://gis.stackexchange.com/questions/330840/error-installing-geopandas
-
-# for the implementation of wikipedia, wikipedia-api has to be installed.
-# import wikipediaapi
-
 
 st.title('There and back again')
 st.header('My personal travel map collection')
@@ -28,24 +11,21 @@ st.write('''Upon opening, the map below is empty. In the sidebar on the left, yo
 I have visited. Upon selection, the map will load again, showing places visited in that country.
 Below the map, you will find a short description of the stay there.''')
 
+places_visited = pd.read_excel("places_visited.xlsx", sheet_name = "places_visited") # loads an excel file containing the data
 
-places_visited = pd.read_excel("places_visited.xlsx", sheet_name = "places_visited")
-
-country = places_visited["country"]
-countries = places_visited.country.unique() 
+country = places_visited["country"] 
+countries = places_visited.country.unique() # shows every country only 1x, no matter how many places
 countries = np.append(countries, ["All"]) # adds a field "All" that shows all countries visited
 countries = np.append(countries, [" "]) # adds an empty field which leads to an empty map
 countries = np.sort(countries, axis = None) # sorts countries alphabetically
-country_choice = st.sidebar.selectbox('Select a country:', countries)
-
-# st.write(countries)
+country_choice = st.sidebar.selectbox('Select a country:', countries) # creates the selectionbox in the sidebar
 
 if country_choice == "All":
-    places_visited2 = places_visited
+    places_visited2 = places_visited # uses full list of places and countries
 else:
-    places_visited2 = places_visited.loc[places_visited['country'] == country_choice]
+    places_visited2 = places_visited.loc[places_visited['country'] == country_choice] # filters for places within the chosen country
 
-def compute_coord_lat(places_visited2):
+def compute_coord_lat(places_visited2): # this function is used to find/create the latitude coordinate of a place
     lat = places_visited2["lat coord"]
     city = places_visited2["place/city"]
     country = places_visited2["country"]
@@ -58,7 +38,7 @@ def compute_coord_lat(places_visited2):
     else:
         return lat
 
-def compute_coord_lon(places_visited2):
+def compute_coord_lon(places_visited2): # this function is used to find/create the longitude coordinate of a place
     lon = places_visited2["lon coord"]
     city = places_visited2["place/city"]
     country = places_visited2["country"]
@@ -71,17 +51,15 @@ def compute_coord_lon(places_visited2):
     else:
         return lon
 
-if country_choice == " ":
+if country_choice == " ": # if the selectbox is empty, an empty map will be shown
     st.map(data=None, zoom = 1)
 else:
     places_visited2["lat"] = places_visited2.apply(compute_coord_lat, axis = 1)
     places_visited2["lon"] = places_visited2.apply(compute_coord_lon, axis = 1)
-    # st.write(places_visited)
+    st.map(places_visited2, zoom = 1) # the map will show places visited within the selected country
 
-    st.map(places_visited2, zoom = 1)
-
+# the following code adds a short description to each country that is written on a second sheet in the excel file
 countries_visited = pd.read_excel("places_visited.xlsx", sheet_name = "description")
-# st.write(countries_visited)
 
 if country_choice == ' ':
     st.write('Make a selection on the sidebar.')
