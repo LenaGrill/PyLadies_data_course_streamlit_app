@@ -3,9 +3,9 @@ import pandas as pd
 import numpy as np
 # import matplotlib.pyplot as plt
 
-from shapely.geometry import Point, Polygon
-import geopandas as gpd
-import geopy
+# from shapely.geometry import Point, Polygon
+# import geopandas as gpd
+# import geopy
 from geopy.geocoders import Nominatim
 # from geopy.extra.rate_limiter import RateLimiter
 
