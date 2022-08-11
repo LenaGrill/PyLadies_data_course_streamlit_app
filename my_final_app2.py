@@ -8,16 +8,17 @@ st.title('There and back again')
 st.header('My personal travel map collection')
 
 st.write('''Upon opening, the map below is empty. In the sidebar on the left, you can choose a country that 
-I have visited. Upon selection, the map will load again, showing places visited in that country.
-Below the map, you will find a short description of the stay there.''')
+I have visited. Upon selection, you will find a short description of the stay there. The map will load again, 
+showing places visited in that country. ''')
 
 places_visited = pd.read_excel("places_visited.xlsx", sheet_name = "places_visited") # loads an excel file containing the data
 
 country = places_visited["country"] 
 countries = places_visited.country.unique() # shows every country only 1x, no matter how many places
-countries = np.append(countries, ["All"]) # adds a field "All" that shows all countries visited
-countries = np.append(countries, [" "]) # adds an empty field which leads to an empty map
 countries = np.sort(countries, axis = None) # sorts countries alphabetically
+countries = np.append(countries, ["All"]) # adds a field "All" that shows all countries visited
+countries = np.insert(countries, 0, [" "]) # adds an empty field which leads to an empty map
+
 country_choice = st.sidebar.selectbox('Select a country:', countries) # creates the selectionbox in the sidebar
 
 if country_choice == "All":
@@ -51,12 +52,18 @@ def compute_coord_lon(places_visited2): # this function is used to find/create t
     else:
         return lon
 
-if country_choice == " ": # if the selectbox is empty, an empty map will be shown
-    st.map(data=None, zoom = 1)
-else:
-    places_visited2["lat"] = places_visited2.apply(compute_coord_lat, axis = 1)
-    places_visited2["lon"] = places_visited2.apply(compute_coord_lon, axis = 1)
-    st.map(places_visited2, zoom = 1) # the map will show places visited within the selected country
+def create_map():
+    if country_choice == " ": # if the selectbox is empty, an empty map will be shown
+        st.map(data=None, zoom = 1)
+    else:
+        counts = len(places_visited2.groupby(["place/city"])) # number of places to be drawn on the map
+        count = 1
+        with st.empty(): # replaces old map with new map
+            while count <= counts: 
+                places_visited2["lat"] = places_visited2.apply(compute_coord_lat, axis = 1)
+                places_visited2["lon"] = places_visited2.apply(compute_coord_lon, axis = 1)
+                st.map(places_visited2[:count], zoom = 1) # the map will show and add one after the other place visited within the selected country
+                count += 1
 
 # the following code adds a short description to each country that is written on a second sheet in the excel file
 countries_visited = pd.read_excel("places_visited.xlsx", sheet_name = "description")
@@ -74,4 +81,4 @@ else:
     furtherDescriptionAsString = text.to_string(columns = ['related link or further description'], na_rep = '', header = False, index = False)
     st.write(furtherDescriptionAsString)
 
-
+create_map()
